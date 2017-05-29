@@ -1,6 +1,6 @@
 import time, random, threading, uuid, os
-import config as cfg
-from communicator import Communicator
+import config
+from communicator.communicator import Communicator
 
 
 class Device(object):
@@ -15,8 +15,9 @@ class Device(object):
     # liste de 'SensorValue' representant les dernieres valeurs enregistrees
     status = None
     # chaine de caractere definissant le statut actuel du device
-    name=""
-    description=""
+    name = ""
+    description = ""
+
     # name and description of the device
 
     def __init__(self):
@@ -41,7 +42,7 @@ class Device(object):
         Use the configuration to format values !
         :return: array of formatted values
         """
-        new_format = [0, 2 ** cfg.DATA_VALUE_SIZE - 1]
+        new_format = [0, 2 ** config.DATA_VALUE_SIZE - 1]
         return [val.get_formated_values(new_format) for val in self.chanels]
 
     def refresh(self):
@@ -74,7 +75,8 @@ class ThreadedDevice(Device, threading.Thread):
     # booleen qui permet de mettre en pause le thread
     refresh_interval = None
     # interval de relancement de 'self.refresh' (must be over 50 because of the music sample)
-    callback=None
+    callback = None
+
     # called when refresh is finished
 
     def __init__(self, refresh_interval, callback=None):
@@ -85,7 +87,14 @@ class ThreadedDevice(Device, threading.Thread):
         self.is_running = False
         self.is_killed = False
         self.set_callback(callback)
+        self.init()
         self.start()
+
+    def init(self):
+        """
+        Implement if the device you need initialisation
+        """
+        return
 
     def run(self):
         """
@@ -122,8 +131,8 @@ class ThreadedDevice(Device, threading.Thread):
     def set_refresh_interval(self, refresh_interval):
         self.refresh_interval = refresh_interval
 
-    def set_callback(self,callback):
-        self.callback=callback
+    def set_callback(self, callback):
+        self.callback = callback
 
 
 class DeviceChanel(object):
@@ -133,6 +142,7 @@ class DeviceChanel(object):
     value_range = None
     # liste de deux elements representant intervalle de valeurs possibles
     last_value = 0
+
     # entier representant la valeur actuelle du sensor
 
     def __init__(self, value_range):
@@ -142,10 +152,10 @@ class DeviceChanel(object):
         """
         :param value: nouvelle valeur
         """
-        if value<self.value_range[0]:
-            value=self.value_range[0]
-        if value>self.value_range[1]:
-            value=self.value_range[1]
+        if value < self.value_range[0]:
+            value = self.value_range[0]
+        if value > self.value_range[1]:
+            value = self.value_range[1]
         self.last_value = value
 
     def check_range(self, value):
@@ -174,14 +184,13 @@ class DeviceChanel(object):
         return None
 
 
-class MyRandom2Device(ThreadedDevice):
+class Random2Device(ThreadedDevice):
     num_of_chanels = 2
     chanels = [DeviceChanel([-100, 100]) for i in range(num_of_chanels)]
     name = "MyRandom2Device"
     description = "This is a test device giving random values."
 
-    def __init__(self,refresh_interval=1000,callback=None):
-        super(MyRandom2Device, self).__init__(refresh_interval,callback)
+    def init(self):
         self.status = "Started !"
 
     def refresh(self):
@@ -200,14 +209,14 @@ class HCSR04Device(ThreadedDevice):
     chanels = [DeviceChanel([1, 200])]
     name = "HCSR04UltrasonicGPIOSensor"
     description = "Implementation for the HCSR04 ultrasonic sensor giving a distance based on an echo sound."
-    GPIO=None
+    GPIO = None
     # gpio library pointer
-    timeout=1000
+    timeout = 1000
+
     # timeout for sensor in ms
-    def __init__(self, refresh_interval=1000,callback=None):
-        super(HCSR04Device, self).__init__(refresh_interval,callback)
+    def init(self):
         import RPi.GPIO
-        self.GPIO=RPi.GPIO
+        self.GPIO = RPi.GPIO
         self.GPIO.setmode(self.GPIO.BCM)
         self.trigger_pin = 23
         self.echo_pin = 24
@@ -215,7 +224,7 @@ class HCSR04Device(ThreadedDevice):
         self.GPIO.setup(self.echo_pin, self.GPIO.IN)
 
     def refresh(self):
-        beginning=time.time()
+        beginning = time.time()
         self.GPIO.output(self.trigger_pin, False)
         time.sleep(0.1)
         self.GPIO.output(self.trigger_pin, True)
@@ -224,11 +233,11 @@ class HCSR04Device(ThreadedDevice):
         pulse_start, pulse_end = 0, 0
         while self.GPIO.input(self.echo_pin) == 0:
             pulse_start = time.time()
-            if pulse_start-beginning>self.timeout/1000:
+            if pulse_start - beginning > self.timeout / 1000:
                 return
         while self.GPIO.input(self.echo_pin) == 1:
             pulse_end = time.time()
-            if pulse_end-pulse_start>self.timeout/1000:
+            if pulse_end - pulse_start > self.timeout / 1000:
                 return
         pulse_duration = pulse_end - pulse_start
         distance = int(pulse_duration * 17000)
@@ -237,6 +246,7 @@ class HCSR04Device(ThreadedDevice):
     def kill(self):
         super(HCSR04Device, self).kill()
         self.GPIO.cleanup()
+
 
 class L3GD20Device(ThreadedDevice):
     # constants
@@ -286,24 +296,23 @@ class L3GD20Device(ThreadedDevice):
         "2000DPS": 0x20
     }
 
-
     # default sensitivity
-    sensibility="250DPS"
+    sensibility = "250DPS"
 
     # used to send and receive with from sensor
-    bus=None
+    bus = None
 
     num_of_chanels = 4
-    chanels = [DeviceChanel([0, 2**16]) for _ in range(3)]+[DeviceChanel([0, 255])]
+    chanels = [DeviceChanel([0, 2 ** 16]) for _ in range(3)] + [DeviceChanel([0, 255])]
     name = "L3GD20"
     description = "Implementation for the L3GD20 gyroscope giving the 3D angular speed and the temperature of the sensor."
 
-    smbus=None
+    smbus = None
+
     # smbus library pointer
-    def __init__(self,refresh_interval=1000,callback=None):
-        super(L3GD20Device, self).__init__(refresh_interval,callback)
+    def init(self):
         import smbus
-        self.smbus=smbus
+        self.smbus = smbus
         self.bus = self.smbus.SMBus(1)
 
         # checking sensor type
@@ -328,16 +337,16 @@ class L3GD20Device(ThreadedDevice):
         x1, x2 = self.read_byte(self.L3GD20_REGISTERS["OUT_X_L"]), self.read_byte(self.L3GD20_REGISTERS["OUT_X_H"])
         y1, y2 = self.read_byte(self.L3GD20_REGISTERS["OUT_Y_L"]), self.read_byte(self.L3GD20_REGISTERS["OUT_Y_H"])
         z1, z2 = self.read_byte(self.L3GD20_REGISTERS["OUT_Z_L"]), self.read_byte(self.L3GD20_REGISTERS["OUT_Z_H"])
-        x=int((x1|(x2<<8)))#*self.L3GD20_SENSIBILITY[self.sensibility])
-        y=int((y1|(y2<<8)))#*self.L3GD20_SENSIBILITY[self.sensibility])
-        z=int((z1|(z2<<8)))#*self.L3GD20_SENSIBILITY[self.sensibility])
-        return [x,y,z]
+        x = int((x1 | (x2 << 8)))  # *self.L3GD20_SENSIBILITY[self.sensibility])
+        y = int((y1 | (y2 << 8)))  # *self.L3GD20_SENSIBILITY[self.sensibility])
+        z = int((z1 | (z2 << 8)))  # *self.L3GD20_SENSIBILITY[self.sensibility])
+        return [x, y, z]
 
     def get_temperature(self):
         t = self.read_byte(self.L3GD20_REGISTERS["OUT_TEMP"])
         if (t & 128) != 0:
             t = t - 256
-        return -t+128
+        return -t + 128
 
     def read_byte(self, register):
         return self.bus.read_byte_data(self.L3GD20_ADDRESS, register)
@@ -346,31 +355,107 @@ class L3GD20Device(ThreadedDevice):
         return self.bus.write_byte_data(self.L3GD20_ADDRESS, register, value)
 
     def refresh(self):
-        res=self.get_orientation()+[self.get_temperature()]
+        res = self.get_orientation() + [self.get_temperature()]
         for i in range(self.num_of_chanels):
             self.chanels[i].set_value(res[i])
+
+
+class GY521(ThreadedDevice):
+    """
+    A I2C sensor which contains a accelerometer, a gyroscope and a thermometer.
+    """
+    I2C_ADDRESS=0x68
+    I2C_REGISTERS = {
+        "PWR_MGMT_1": 0x6B,
+        "ACCEL_XOUT_H": 0x3B,
+        "ACCEL_XOUT_L": 0x3C,
+        "ACCEL_YOUT_H": 0x3D,
+        "ACCEL_YOUT_L": 0x3E,
+        "ACCEL_ZOUT_H": 0x3F,
+        "ACCEL_ZOUT_L": 0x40,
+        "TEMP_OUT_H": 0x41,
+        "TEMP_OUT_L": 0x42,
+        "GYRO_XOUT_H": 0x43,
+        "GYRO_XOUT_L": 0x44,
+        "GYRO_YOUT_H": 0x45,
+        "GYRO_YOUT_L": 0x46,
+        "GYRO_ZOUT_H": 0x47,
+        "GYRO_ZOUT_L": 0x48,
+
+    }
+
+    # used to send and receive with from sensor
+    bus = None
+    # smbus library pointer
+    smbus = None
+
+    num_of_chanels = 8
+    chanels = [DeviceChanel([0, 2 ** 16]) for _ in range(8)]
+    name = "GY521"
+    description = "Implementation for the GY521 gyroscope and accelerometer giving the acceleration, angular speed and the temperature of the sensor and also the computed overall acceleration. (ax,ay,az,t,gx,gy,gz,as)"
+
+    def init(self):
+        import smbus
+        self.smbus = smbus
+        self.bus = self.smbus.SMBus(1)
+
+    def read_byte(self, register):
+        return self.bus.read_byte_data(self.I2C_ADDRESS, register)
+
+    def write_byte(self, register, value):
+        return self.bus.write_byte_data(self.I2C_ADDRESS, register, value)
+
+    def get_raw_data(self):
+        ax=self.read_byte(self.I2C_REGISTERS["ACCEL_XOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["ACCEL_XOUT_L"])
+        ay=self.read_byte(self.I2C_REGISTERS["ACCEL_YOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["ACCEL_YOUT_L"])
+        az=self.read_byte(self.I2C_REGISTERS["ACCEL_ZOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["ACCEL_ZOUT_L"])
+        t=self.read_byte(self.I2C_REGISTERS["TEMP_OUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["TEMP_OUT_L"])
+        gx=self.read_byte(self.I2C_REGISTERS["GYRO_XOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["GYRO_XOUT_L"])
+        gy=self.read_byte(self.I2C_REGISTERS["GYRO_YOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["GYRO_YOUT_L"])
+        gz=self.read_byte(self.I2C_REGISTERS["GYRO_ZOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["GYRO_ZOUT_L"])
+        return [ax,ay,az,t,gx,gy,gz]
+
+    def refresh(self):
+        raw=self.get_raw_data()
+        for i in range(7):
+            self.chanels[i].set_value(raw[i])
+        accsum=pow(pow(raw[0],2)+pow(raw[1],2)+pow(raw[2],2),0.5)
+        self.chanels[7].set_value(accsum)
+
+
+
+
+
+implemented_devices = {
+    "L3GD20Device": L3GD20Device,
+    "HCSR04Device": HCSR04Device,
+    "Random2Device": Random2Device
+    "GY521":GY521
+}
+
 
 class Brain(object):
     global_uid = None
     # chaine de caractere unique "persistante" permettant d'indentifier un device
     device = None
     communicator = None
-    def __init__(self,device):
-        if os.path.isfile(cfg.GUID_FILENAME):
-            guidfile = open(cfg.GUID_FILENAME, "r")
+
+    def __init__(self, device):
+        if os.path.isfile(config.GUID_FILENAME):
+            guidfile = open(config.GUID_FILENAME, "r")
             self.global_uid = guidfile.read()
             guidfile.close()
         else:
-            guidfile = open(cfg.GUID_FILENAME, "w")
+            guidfile = open(config.GUID_FILENAME, "w")
             self.global_uid = str(uuid.uuid4()).replace("-", "")
             guidfile.write(self.global_uid)
             guidfile.close()
-        cfg.log(self.get_guid())
-        self.device=device
-        self.communicator = Communicator(False,self.get_guid())
+        config.log(self.get_guid())
+        self.device = device
+        self.communicator = Communicator(False, self.get_guid())
         # device mode of communicator
-        self.communicator.give_my_spec(device.get_num_of_chanels(),device.name,device.description)
-        if isinstance(self.device,ThreadedDevice):
+        self.communicator.give_my_spec(device.get_num_of_chanels(), device.name, device.description)
+        if isinstance(self.device, ThreadedDevice):
             self.device.set_callback(self.send_data_to_serv)
 
     def get_guid(self):
@@ -379,7 +464,8 @@ class Brain(object):
         """
         return self.global_uid
 
-    def send_data_to_serv(self,device):
+    def send_data_to_serv(self, device):
+        print(device.get_values())
         if self.communicator.is_ready():
             self.communicator.give_data_packet(device.get_values())
 
@@ -387,12 +473,13 @@ class Brain(object):
         self.device.kill()
         self.communicator.stop()
 
+
 if __name__ == "__main__":
-    device=brain=None
+    device = brain = None
     try:
-        device=HCSR04Device(100)
+        device = implemented_devices[config.SENSOR](100)
         brain = Brain(device)
-        while True:continue
+        while True: continue
     except KeyboardInterrupt as e:
         print("<Ctrl-c> = user quit")
     finally:
