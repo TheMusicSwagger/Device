@@ -429,7 +429,7 @@ class GY521(ThreadedDevice):
 implemented_devices = {
     "L3GD20Device": L3GD20Device,
     "HCSR04Device": HCSR04Device,
-    "Random2Device": Random2Device
+    "Random2Device": Random2Device,
     "GY521":GY521
 }
 
