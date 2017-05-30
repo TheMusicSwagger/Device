@@ -7,7 +7,7 @@ class Config:
     SENSOR="GY521"
     GUID_FILENAME="guid"
 
-    DEBUG_MODE=False
+    DEBUG_MODE=True
     RAISE_ERROR=False
     DATA_VALUE_SIZE=com_cfg.DATA_VALUE_SIZE
     ################################################

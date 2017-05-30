@@ -435,9 +435,8 @@ implemented_devices = {
 }
 
 
-class Brain(object):
+class DeviceBrain(object):
     global_uid = None
-    # chaine de caractere unique "persistante" permettant d'indentifier un device
     device = None
     communicator = None
 
@@ -454,6 +453,7 @@ class Brain(object):
         cfg.log(self.get_guid())
         self.device = device
         self.communicator = Communicator(False, self.get_guid())
+        cfg.log("Ok")
         # device mode of communicator
         self.communicator.give_my_spec(device.get_num_of_chanels(), device.name, device.description)
         if isinstance(self.device, ThreadedDevice):
@@ -479,7 +479,7 @@ if __name__ == "__main__":
     device = brain = None
     try:
         device = implemented_devices[cfg.SENSOR](100)
-        brain = Brain(device)
+        brain = DeviceBrain(device)
         while True: continue
     except KeyboardInterrupt as e:
         print("<Ctrl-c> = user quit")
