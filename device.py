@@ -1,5 +1,5 @@
 import time, random, threading, uuid, os
-import configuration
+from dev_config import Config as cfg
 from communicator.communicator import Communicator
 
 
@@ -39,10 +39,10 @@ class Device(object):
 
     def get_values(self):
         """
-        Use the configuration to format values !
+        Use the cfg to format values !
         :return: array of formatted values
         """
-        new_format = [0, 2 ** configuration.DATA_VALUE_SIZE - 1]
+        new_format = [0, 2 ** cfg.DATA_VALUE_SIZE - 1]
         return [val.get_formated_values(new_format) for val in self.chanels]
 
     def refresh(self):
@@ -441,16 +441,16 @@ class Brain(object):
     communicator = None
 
     def __init__(self, device):
-        if os.path.isfile(configuration.GUID_FILENAME):
-            guidfile = open(configuration.GUID_FILENAME, "r")
+        if os.path.isfile(cfg.GUID_FILENAME):
+            guidfile = open(cfg.GUID_FILENAME, "r")
             self.global_uid = guidfile.read()
             guidfile.close()
         else:
-            guidfile = open(configuration.GUID_FILENAME, "w")
+            guidfile = open(cfg.GUID_FILENAME, "w")
             self.global_uid = str(uuid.uuid4()).replace("-", "")
             guidfile.write(self.global_uid)
             guidfile.close()
-        configuration.log(self.get_guid())
+        cfg.log(self.get_guid())
         self.device = device
         self.communicator = Communicator(False, self.get_guid())
         # device mode of communicator
@@ -477,7 +477,7 @@ class Brain(object):
 if __name__ == "__main__":
     device = brain = None
     try:
-        device = implemented_devices[configuration.SENSOR](100)
+        device = implemented_devices[cfg.SENSOR](100)
         brain = Brain(device)
         while True: continue
     except KeyboardInterrupt as e:
