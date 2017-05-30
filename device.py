@@ -17,7 +17,6 @@ class Device(object):
     # chaine de caractere definissant le statut actuel du device
     name = ""
     description = ""
-
     # name and description of the device
 
     def __init__(self):
