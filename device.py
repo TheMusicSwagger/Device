@@ -1,4 +1,4 @@
-import time, random, threading, uuid, os
+import time, random, threading, uuid, os, ctypes
 from dev_config import Config as cfg
 from communicator.communicator import Communicator
 
@@ -407,20 +407,20 @@ class GY521(ThreadedDevice):
         return self.bus.write_byte_data(self.I2C_ADDRESS, register, value)
 
     def get_raw_data(self):
-        ax=self.read_byte(self.I2C_REGISTERS["ACCEL_XOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["ACCEL_XOUT_L"])
-        ay=self.read_byte(self.I2C_REGISTERS["ACCEL_YOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["ACCEL_YOUT_L"])
-        az=self.read_byte(self.I2C_REGISTERS["ACCEL_ZOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["ACCEL_ZOUT_L"])
-        t=self.read_byte(self.I2C_REGISTERS["TEMP_OUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["TEMP_OUT_L"])
-        gx=self.read_byte(self.I2C_REGISTERS["GYRO_XOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["GYRO_XOUT_L"])
-        gy=self.read_byte(self.I2C_REGISTERS["GYRO_YOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["GYRO_YOUT_L"])
-        gz=self.read_byte(self.I2C_REGISTERS["GYRO_ZOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["GYRO_ZOUT_L"])
+        ax=ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["ACCEL_XOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["ACCEL_XOUT_L"])).value
+        ay=ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["ACCEL_YOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["ACCEL_YOUT_L"])).value
+        az=ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["ACCEL_ZOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["ACCEL_ZOUT_L"])).value
+        t=ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["TEMP_OUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["TEMP_OUT_L"])).value
+        gx=ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["GYRO_XOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["GYRO_XOUT_L"])).value
+        gy=ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["GYRO_YOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["GYRO_YOUT_L"])).value
+        gz=ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["GYRO_ZOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["GYRO_ZOUT_L"])).value
         return [ax,ay,az,t,gx,gy,gz]
 
     def refresh(self):
         raw=self.get_raw_data()
         for i in range(7):
             self.chanels[i].set_value(raw[i])
-        accsum=pow(pow(raw[0]-(2**15),2)+pow(raw[1]-(2**15),2)+pow(raw[2]-(2**15),2),0.5)
+        accsum=pow(pow(raw[0],2)+pow(raw[1],2)+pow(raw[2],2),0.5)
         self.chanels[7].set_value(accsum)
 
 
