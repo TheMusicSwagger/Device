@@ -420,7 +420,7 @@ class GY521(ThreadedDevice):
         raw=self.get_raw_data()
         for i in range(7):
             self.chanels[i].set_value(raw[i])
-        accsum=pow(pow(raw[0],2)+pow(raw[1],2)+pow(raw[2],2),0.5)
+        accsum=pow(pow(raw[0]-(2**15),2)+pow(raw[1]-(2**15),2)+pow(raw[2]-(2**15),2),0.5)
         self.chanels[7].set_value(accsum)
 
 
