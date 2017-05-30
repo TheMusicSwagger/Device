@@ -1,5 +1,5 @@
 import time, random, threading, uuid, os
-from dev_config import Config as cfg
+from .dev_config import Config as cfg
 from communicator.communicator import Communicator
 
 
