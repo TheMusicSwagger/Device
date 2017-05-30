@@ -179,8 +179,7 @@ class DeviceChanel(object):
         :return: 'self.get_value()' formate avec l'interval 'new_format'
         """
         if self.get_value() != None:
-            return int(((self.get_value() - self.value_range[0]) * (new_format[1] - new_format[0]) / (
-                self.value_range[1] - self.value_range[0])) + new_format[0])
+            return int((((self.get_value()-self.get_range()[0])*(new_format[1] - new_format[0]))/(self.get_range()[1]-self.get_range()[0]))+new_format[0])
         return None
 
 
@@ -398,7 +397,7 @@ class GY521(ThreadedDevice):
         import smbus
         self.smbus = smbus
         self.bus = self.smbus.SMBus(1)
-        
+
         # power device up
         self.write_byte(self.I2C_REGISTERS["PWR_MGMT_1"],0)
 
