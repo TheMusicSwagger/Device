@@ -398,6 +398,9 @@ class GY521(ThreadedDevice):
         import smbus
         self.smbus = smbus
         self.bus = self.smbus.SMBus(1)
+        
+        # power device up
+        self.write_byte(self.I2C_REGISTERS["PWR_MGMT_1"],0)
 
     def read_byte(self, register):
         return self.bus.read_byte_data(self.I2C_ADDRESS, register)
