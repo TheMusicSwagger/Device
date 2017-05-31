@@ -17,6 +17,7 @@ class Device(object):
     # chaine de caractere definissant le statut actuel du device
     name = ""
     description = ""
+
     # name and description of the device
 
     def __init__(self):
@@ -178,7 +179,8 @@ class DeviceChanel(object):
         :return: 'self.get_value()' formate avec l'interval 'new_format'
         """
         if self.get_value() != None:
-            return int((((self.get_value()-self.get_range()[0])*(new_format[1] - new_format[0]))/(self.get_range()[1]-self.get_range()[0]))+new_format[0])
+            return int((((self.get_value() - self.get_range()[0]) * (new_format[1] - new_format[0])) / (
+            self.get_range()[1] - self.get_range()[0])) + new_format[0])
         return None
 
 
@@ -362,7 +364,7 @@ class GY521(ThreadedDevice):
     """
     A I2C sensor which contains a accelerometer, a gyroscope and a thermometer.
     """
-    I2C_ADDRESS=0x68
+    I2C_ADDRESS = 0x68
     I2C_REGISTERS = {
         "PWR_MGMT_1": 0x6B,
         "ACCEL_XOUT_H": 0x3B,
@@ -398,7 +400,7 @@ class GY521(ThreadedDevice):
         self.bus = self.smbus.SMBus(1)
 
         # power device up
-        self.write_byte(self.I2C_REGISTERS["PWR_MGMT_1"],0)
+        self.write_byte(self.I2C_REGISTERS["PWR_MGMT_1"], 0)
 
     def read_byte(self, register):
         return self.bus.read_byte_data(self.I2C_ADDRESS, register)
@@ -407,31 +409,35 @@ class GY521(ThreadedDevice):
         return self.bus.write_byte_data(self.I2C_ADDRESS, register, value)
 
     def get_raw_data(self):
-        ax=ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["ACCEL_XOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["ACCEL_XOUT_L"])).value
-        ay=ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["ACCEL_YOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["ACCEL_YOUT_L"])).value
-        az=ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["ACCEL_ZOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["ACCEL_ZOUT_L"])).value
-        t=ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["TEMP_OUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["TEMP_OUT_L"])).value
-        gx=ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["GYRO_XOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["GYRO_XOUT_L"])).value
-        gy=ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["GYRO_YOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["GYRO_YOUT_L"])).value
-        gz=ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["GYRO_ZOUT_H"])<<8|self.read_byte(self.I2C_REGISTERS["GYRO_ZOUT_L"])).value
-        return [ax,ay,az,t,gx,gy,gz]
+        ax = ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["ACCEL_XOUT_H"]) << 8 | self.read_byte(
+            self.I2C_REGISTERS["ACCEL_XOUT_L"])).value
+        ay = ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["ACCEL_YOUT_H"]) << 8 | self.read_byte(
+            self.I2C_REGISTERS["ACCEL_YOUT_L"])).value
+        az = ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["ACCEL_ZOUT_H"]) << 8 | self.read_byte(
+            self.I2C_REGISTERS["ACCEL_ZOUT_L"])).value
+        t = ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["TEMP_OUT_H"]) << 8 | self.read_byte(
+            self.I2C_REGISTERS["TEMP_OUT_L"])).value
+        gx = ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["GYRO_XOUT_H"]) << 8 | self.read_byte(
+            self.I2C_REGISTERS["GYRO_XOUT_L"])).value
+        gy = ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["GYRO_YOUT_H"]) << 8 | self.read_byte(
+            self.I2C_REGISTERS["GYRO_YOUT_L"])).value
+        gz = ctypes.c_int16(self.read_byte(self.I2C_REGISTERS["GYRO_ZOUT_H"]) << 8 | self.read_byte(
+            self.I2C_REGISTERS["GYRO_ZOUT_L"])).value
+        return [ax, ay, az, t, gx, gy, gz]
 
     def refresh(self):
-        raw=self.get_raw_data()
+        raw = self.get_raw_data()
         for i in range(7):
             self.chanels[i].set_value(raw[i])
-        accsum=pow(pow(raw[0],2)+pow(raw[1],2)+pow(raw[2],2),0.5)
+        accsum = pow(pow(raw[0], 2) + pow(raw[1], 2) + pow(raw[2], 2), 0.5)
         self.chanels[7].set_value(accsum)
-
-
-
 
 
 implemented_devices = {
     "L3GD20Device": L3GD20Device,
     "HCSR04Device": HCSR04Device,
     "Random2Device": Random2Device,
-    "GY521":GY521
+    "GY521": GY521
 }
 
 
