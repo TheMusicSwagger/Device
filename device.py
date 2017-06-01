@@ -187,7 +187,7 @@ class DeviceChanel(object):
 class Random2Device(ThreadedDevice):
     num_of_chanels = 2
     chanels = [DeviceChanel([-100, 100]) for i in range(num_of_chanels)]
-    name = "MyRandom2Device"
+    name = "Random2Device"
     description = "This is a test device giving random values."
 
     def init(self):
@@ -207,7 +207,7 @@ class HCSR04Device(ThreadedDevice):
     """
     num_of_chanels = 1
     chanels = [DeviceChanel([1, 200])]
-    name = "HCSR04UltrasonicGPIOSensor"
+    name = "HCSR04Device"
     description = "Implementation for the HCSR04 ultrasonic sensor giving a distance based on an echo sound."
     GPIO = None
     # gpio library pointer
